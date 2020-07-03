@@ -1,0 +1,19 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 47.100.48.207:8848
+        group: data
+      config:
+        server-addr: 47.100.48.207:8848
+        group: data
+        file-extension: yaml
+---
+spring:
+  profiles: dev
+  cloud:
+    nacos:
+      discovery:
+        namespace: 56df9999-9fac-418b-96d3-647a7b3bffcc
+      config:
+        namespace: 56df9999-9fac-418b-96d3-647a7b3bffcc
