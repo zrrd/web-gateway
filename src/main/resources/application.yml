@@ -6,6 +6,12 @@ spring:
       discovery:
         locator:
           enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: oauth-route
+          uri: lb://auth-server
+          predicates:
+            Path=/oauth/**
 management:
   endpoint:
     info:
@@ -34,3 +40,4 @@ management:
     web:
       exposure:
         include: "*"
+jwt-secret-key: KmReSFdkIVZYd2VwZjVqaHVYUmIlTXpIcm5HSzgldXM=
