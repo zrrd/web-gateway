@@ -28,4 +28,8 @@ public interface UserConstants {
      * 登陆账户
      */
     String USER_NAME = "user_name";
+    /**
+     * 客户端id
+     */
+    String CLIENT_ID = "client_id";
 }

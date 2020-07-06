@@ -14,4 +14,8 @@ public interface ReqContextConstant {
      * 该token是 平台用户 还是 client
      */
     String SECURITY_IS_USER = "SECURITY_IS_USER";
+    /**
+     * 用户信息
+     */
+    String GATEWAY_AUTHENTICATION_INFO = "GATEWAY_AUTHENTICATION_INFO";
 }

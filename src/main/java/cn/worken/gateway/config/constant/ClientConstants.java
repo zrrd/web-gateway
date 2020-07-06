@@ -12,4 +12,8 @@ public interface ClientConstants {
      * 组织id
      */
     String COM_ID = "com_id";
+    /**
+     * 客户端id
+     */
+    String CLIENT_ID = "client_id";
 }

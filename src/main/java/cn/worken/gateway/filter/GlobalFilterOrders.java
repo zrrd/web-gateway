@@ -13,7 +13,8 @@ public enum GlobalFilterOrders {
     /**
      * 认证
      */
-    AUTHENTICATION(OrderStart.COUNT.getAndIncrement());
+    AUTHENTICATION(OrderStart.COUNT.getAndIncrement()),
+    RESOURCE_ACCESS(OrderStart.COUNT.getAndIncrement()),;
 
     private final int order;
 

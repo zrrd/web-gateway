@@ -1,5 +1,6 @@
 package cn.worken.gateway.config;
 
+import com.google.common.collect.ImmutableMap;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -12,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.codec.HttpMessageReader;
 import org.springframework.http.codec.HttpMessageWriter;
 import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.util.Assert;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.server.RequestPredicates;
@@ -79,21 +81,27 @@ public class GatewayWebExceptionHandler implements ErrorWebExceptionHandler {
         HttpStatus httpStatus;
         String body;
         if (ex instanceof NotFoundException) {
+            // 服务未找到
             httpStatus = HttpStatus.NOT_FOUND;
-            body = "Service Not Found";
+            body = "服务维护中 请稍等...";
         } else if (ex instanceof ResponseStatusException) {
             ResponseStatusException responseStatusException = (ResponseStatusException) ex;
             httpStatus = responseStatusException.getStatus();
             body = responseStatusException.getMessage();
+        } else if (ex instanceof AuthenticationException) {
+            // 鉴权失败
+            httpStatus = HttpStatus.UNAUTHORIZED;
+            body = "用户未认证!";
         } else {
+            // 其他异常
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            body = "Internal Server Error";
+            body = "系统异常!";
         }
         //封装响应体,此body可修改为自己的jsonBody
         Map<String, Object> result = new HashMap<>(2, 1);
         // http响应码
         result.put("httpStatus", HttpStatus.OK);
-        String msg = "{\"code\":" + httpStatus + ",\"message\": \"" + body + "\"}";
+        Map<String, Object> msg = ImmutableMap.of("code", httpStatus.value(), "message", body);
         // 实际响应内容
         result.put("body", msg);
         //错误记录
