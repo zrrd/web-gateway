@@ -1,5 +1,7 @@
 package cn.worken.gateway.auth;
 
+import cn.worken.gateway.config.constant.ReqContextConstant;
+import cn.worken.gateway.config.constant.UserConstants;
 import cn.worken.gateway.util.RSAUtils;
 import com.google.common.io.CharStreams;
 import java.io.File;
@@ -56,21 +58,29 @@ public class SecurityConfig {
             .and().authorizeExchange().pathMatchers("/oauth/**").permitAll()
             // 其他所有接口需要鉴权
             .and().authorizeExchange().anyExchange().access((authentication, object) -> {
-                    // 获取token
-                    return new ServerBearerTokenAuthenticationConverter().convert(object.getExchange())
-                        .map(auth -> (BearerTokenAuthenticationToken) auth)
-                        .flatMap(authToken -> jwtDecoder().decode(authToken.getToken()))
-                        .map(jwt -> new AuthorizationDecision(true))
-                        .onErrorReturn((throwable) -> {
-                            log.error("", throwable);
-                            return true;
-                        }, new AuthorizationDecision(false));
-                }
-            )
+                // 获取token
+                return new ServerBearerTokenAuthenticationConverter().convert(object.getExchange())
+                    .map(auth -> (BearerTokenAuthenticationToken) auth)
+                    // 校验 jwt token
+                    .flatMap(authToken -> jwtDecoder().decode(authToken.getToken()))
+                    // 校验成功 , 在 attributes 中放入校验后的信息 jwt
+                    .doOnSuccess(authJwt -> object.getExchange().getAttributes()
+                        .put(ReqContextConstant.SECURITY_INFO_IN_REQ, authJwt))
+                    // 判断是否是平台用户还是 client 请求
+                    .doOnSuccess(authJwt -> object.getExchange().getAttributes()
+                        .put(ReqContextConstant.SECURITY_IS_USER,
+                            authJwt.getClaims().get(UserConstants.USER_NAME) != null))
+                    .map(jwt -> new AuthorizationDecision(true))
+                    // 校验失败 抛出异常 交给全局异常处理
+                    .onErrorReturn((throwable) -> {
+                        log.error("", throwable);
+                        return true;
+                    }, new AuthorizationDecision(false));
+            })
             // 鉴权校验失败 直接抛出异常交给全局异常处理
             .and().exceptionHandling().authenticationEntryPoint((exchange, e) -> Mono.error(e))
+            // 资源校验失败 直接抛出异常交给全局异常处理
             .and().exceptionHandling().accessDeniedHandler((exchange, e) -> Mono.error(e))
             .and().build();
-
     }
 }
