@@ -18,6 +18,7 @@ import org.springframework.security.oauth2.server.resource.BearerTokenAuthentica
 import org.springframework.security.oauth2.server.resource.web.server.ServerBearerTokenAuthenticationConverter;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.util.ResourceUtils;
+import reactor.core.publisher.Mono;
 
 /**
  * 鉴权判断
@@ -66,6 +67,9 @@ public class SecurityConfig {
                         }, new AuthorizationDecision(false));
                 }
             )
+            // 鉴权校验失败 直接抛出异常交给全局异常处理
+            .and().exceptionHandling().authenticationEntryPoint((exchange, e) -> Mono.error(e))
+            .and().exceptionHandling().accessDeniedHandler((exchange, e) -> Mono.error(e))
             .and().build();
 
     }
