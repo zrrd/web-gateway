@@ -20,12 +20,14 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserResourceAdapter implements ResourceAdapter<UserApiResource> {
 
+    private final UserApiResourceMapping userApiResourceMapping;
     private final StringRedisTemplate stringRedisTemplate;
     private final String redisResPrefix;
 
-    public UserResourceAdapter(StringRedisTemplate stringRedisTemplate) {
+    public UserResourceAdapter(UserApiResourceMapping userApiResourceMapping, StringRedisTemplate stringRedisTemplate) {
+        this.userApiResourceMapping = userApiResourceMapping;
         this.stringRedisTemplate = stringRedisTemplate;
-        this.redisResPrefix =   "oauth:res:";
+        this.redisResPrefix = "oauth:res:";
     }
 
     @Override
@@ -35,7 +37,13 @@ public class UserResourceAdapter implements ResourceAdapter<UserApiResource> {
 
     @Override
     public UserApiResource loadResourceByReqUri(String serviceId, String reqUri) {
-        return null;
+        UserApiResource userApiResource = userApiResourceMapping.getUserApiResource(serviceId, reqUri);
+        if (null == userApiResource) {
+            userApiResource = new UserApiResource();
+            userApiResource.setApiId("");
+            userApiResource.setResourceName(reqUri);
+        }
+        return userApiResource;
     }
 
     @Override
@@ -43,7 +51,7 @@ public class UserResourceAdapter implements ResourceAdapter<UserApiResource> {
         ResourceAccessStatus resourceAccessStatus = new ResourceAccessStatus();
         if (apiResource == null || apiResource.getApiId() == null) {
             resourceAccessStatus.setAccess(true);
-        } else if (remoteCheckApiAccess(authenticationInfo.getUsername(), apiResource.getApiId())) {
+        } else if (remoteCheckApiAccess(authenticationInfo.getUserId(), apiResource.getApiId())) {
             resourceAccessStatus.setAccess(true);
         } else {
             resourceAccessStatus.setAccess(false);

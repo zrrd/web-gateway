@@ -1,5 +1,6 @@
 package cn.worken.gateway.resource.adapter.user;
 
+import cn.worken.gateway.resource.ResourceControl;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.net.URI;
@@ -31,13 +32,15 @@ public class ServiceResourceFresher implements ApplicationListener<HeartbeatEven
     private final Cache<String, List<ServiceInstance>> serviceInstanceCache;
     private final Cache<String, URI> successLoadServiceCache;
     private final UserApiResourceMapping updateServiceApiMapping;
+    private final ResourceControl resourceControl;
 
     public ServiceResourceFresher(RestTemplate restTemplate,
         DiscoveryClient discoveryClient,
-        UserApiResourceMapping updateServiceApiMapping) {
+        UserApiResourceMapping updateServiceApiMapping, ResourceControl resourceControl) {
         this.restTemplate = restTemplate;
         this.discoveryClient = discoveryClient;
         this.updateServiceApiMapping = updateServiceApiMapping;
+        this.resourceControl = resourceControl;
         this.serviceInstanceCache = CacheBuilder.newBuilder().build();
         this.successLoadServiceCache = CacheBuilder.newBuilder().build();
     }
@@ -49,6 +52,8 @@ public class ServiceResourceFresher implements ApplicationListener<HeartbeatEven
     @Override
     public void onApplicationEvent(HeartbeatEvent heartbeatEvent) {
         discoveryClient.getServices().stream()
+            // 不是注册的资源
+            .filter(s -> !resourceControl.isExcludeResourceService(s))
             // 获取所有服务的实例
             .map(s -> new ImmutablePair<>(s, discoveryClient.getInstances(s)))
             .filter(p -> !p.getRight().isEmpty())

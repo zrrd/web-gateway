@@ -1,5 +1,6 @@
 package cn.worken.gateway.config;
 
+import cn.worken.gateway.config.exception.GatewayException;
 import com.google.common.collect.ImmutableMap;
 import java.util.Collections;
 import java.util.HashMap;
@@ -92,6 +93,9 @@ public class GatewayWebExceptionHandler implements ErrorWebExceptionHandler {
             // 鉴权失败
             httpStatus = HttpStatus.UNAUTHORIZED;
             body = "用户未认证!";
+        } else if (ex instanceof GatewayException) {
+            httpStatus = HttpStatus.valueOf(((GatewayException) ex).getCode());
+            body = ex.getMessage();
         } else {
             // 其他异常
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
