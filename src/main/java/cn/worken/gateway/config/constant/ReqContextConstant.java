@@ -18,4 +18,8 @@ public interface ReqContextConstant {
      * 用户信息
      */
     String GATEWAY_AUTHENTICATION_INFO = "GATEWAY_AUTHENTICATION_INFO";
+    /**
+     * 是否为白名单ip
+     */
+    String IS_WHITE_API = "IS_WHITE_API";
 }

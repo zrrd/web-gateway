@@ -27,10 +27,11 @@ public class ResourceControl {
     }
 
     /**
-     * 是否位不予路由的服务
+     * 不需要资源校验的服务
      */
     public boolean isExcludeResourceService(String service) {
-        boolean excludeService = StringUtils.isBlank(service) || properties.getExcludeResourceServiceList().contains(service);
+        boolean excludeService =
+            StringUtils.isBlank(service) || properties.getExcludeResourceServiceList().contains(service);
         log.debug("网关uri控制[excludeService]--->{}   {}", service, excludeService);
         return excludeService;
     }
@@ -52,12 +53,12 @@ public class ResourceControl {
     /**
      * 用户黑名单 用户无法访问
      */
-    public boolean isUserBlockApiList(String api) {
+    public boolean isBlockApiList(String api) {
         boolean blockApiList;
         if (StringUtils.isBlank(api)) {
             blockApiList = false;
         } else {
-            blockApiList = anyMatch(api, properties.getUserBlockApiList());
+            blockApiList = anyMatch(api, properties.getBlockApiList());
         }
         log.debug("网关uri控制[UserBlockApiList]--->{}   {}", api, blockApiList);
         return blockApiList;

@@ -15,6 +15,12 @@ import org.springframework.web.server.ServerWebExchange;
  */
 public interface ResourceAdapter<T extends ApiResource> {
 
+    /**
+     * 通过请求上下文获取 apiResource
+     *
+     * @param exchange 请求上下文
+     * @return 资源
+     */
     default T loadResource(ServerWebExchange exchange) {
         Route route = exchange.getAttribute(GATEWAY_ROUTE_ATTR);
         if (route == null) {

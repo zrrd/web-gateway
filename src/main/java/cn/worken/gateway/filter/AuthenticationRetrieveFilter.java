@@ -1,9 +1,12 @@
 package cn.worken.gateway.filter;
 
 import cn.worken.gateway.config.constant.ClientConstants;
+import cn.worken.gateway.config.constant.GatewayTransHeader;
 import cn.worken.gateway.config.constant.ReqContextConstant;
 import cn.worken.gateway.config.constant.UserConstants;
 import cn.worken.gateway.dto.GatewayAuthenticationInfo;
+import cn.worken.gateway.resource.manage.WhiteListServerWebExchangeMatcher;
+import com.alibaba.fastjson.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
@@ -23,9 +26,18 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public class AuthenticationRetrieveFilter implements GlobalFilter, Ordered {
 
+    private final WhiteListServerWebExchangeMatcher whiteListServerWebExchangeMatcher;
+
+    public AuthenticationRetrieveFilter(WhiteListServerWebExchangeMatcher whiteListServerWebExchangeMatcher) {
+        this.whiteListServerWebExchangeMatcher = whiteListServerWebExchangeMatcher;
+    }
+
+
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        // TODO 判断是否为白名单id
+        if (whiteListServerWebExchangeMatcher.isWhiteApi(exchange)) {
+            return chain.filter(exchange);
+        }
         Boolean isUser = exchange.getAttribute(ReqContextConstant.SECURITY_IS_USER);
         Jwt jwt = exchange.getAttribute(ReqContextConstant.SECURITY_INFO_IN_REQ);
         if (jwt == null || isUser == null) {
@@ -49,6 +61,9 @@ public class AuthenticationRetrieveFilter implements GlobalFilter, Ordered {
         }
         // attribute 存入用户信息
         exchange.getAttributes().put(ReqContextConstant.GATEWAY_AUTHENTICATION_INFO, authenticationInfo);
+        // 请求头存入用户信息 供后续服务访问
+        exchange.getRequest().getHeaders()
+            .set(GatewayTransHeader.X_GATEWAY_AUTHENTICATION_INFO, JSON.toJSONString(authenticationInfo));
         return chain.filter(exchange);
     }
 

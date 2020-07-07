@@ -2,6 +2,7 @@ package cn.worken.gateway.auth;
 
 import cn.worken.gateway.config.constant.ReqContextConstant;
 import cn.worken.gateway.config.constant.UserConstants;
+import cn.worken.gateway.resource.manage.WhiteListServerWebExchangeMatcher;
 import cn.worken.gateway.util.RSAUtils;
 import com.google.common.io.CharStreams;
 import java.io.File;
@@ -33,6 +34,12 @@ import reactor.core.publisher.Mono;
 @EnableWebFluxSecurity
 public class SecurityConfig {
 
+    private final WhiteListServerWebExchangeMatcher whiteListServerWebExchangeMatcher;
+
+    public SecurityConfig(WhiteListServerWebExchangeMatcher whiteListServerWebExchangeMatcher) {
+        this.whiteListServerWebExchangeMatcher = whiteListServerWebExchangeMatcher;
+    }
+
     /**
      * rsa 加密 key
      */
@@ -53,9 +60,7 @@ public class SecurityConfig {
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         // 允许端点监控
         return http.csrf().disable()
-            .authorizeExchange().pathMatchers("/actuator/**").permitAll()
-            // 白名单
-            .and().authorizeExchange().pathMatchers("/oauth/**").permitAll()
+            .authorizeExchange().matchers(whiteListServerWebExchangeMatcher).permitAll()
             // 其他所有接口需要鉴权
             .and().authorizeExchange().anyExchange().access((authentication, object) -> {
                 // 获取token

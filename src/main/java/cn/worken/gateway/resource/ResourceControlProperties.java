@@ -32,12 +32,12 @@ public class ResourceControlProperties {
     /**
      * 用户黑名单列表
      */
-    private Set<String> userBlockApiList = new HashSet<>();
+    private Set<String> blockApiList = new HashSet<>();
 
 
     @PostConstruct
     private void init() {
-        log.info("网关uri控制列表------>excludeServices:[{}]\nwhiteApiList:[{}]\nuserBlockApiList:[{}]}",
-            excludeResourceServiceList, whiteApiList, userBlockApiList);
+        log.info("网关uri控制列表------>\nexcludeResourceServiceList:[{}]\nwhiteApiList:[{}]\nblockApiList:[{}]",
+            excludeResourceServiceList, whiteApiList, blockApiList);
     }
 }

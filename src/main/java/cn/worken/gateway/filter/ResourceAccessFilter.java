@@ -1,11 +1,12 @@
 package cn.worken.gateway.filter;
 
+import cn.worken.gateway.config.constant.GatewayCode;
 import cn.worken.gateway.config.constant.ReqContextConstant;
 import cn.worken.gateway.config.exception.GatewayException;
 import cn.worken.gateway.dto.GatewayAuthenticationInfo;
+import cn.worken.gateway.resource.ResourceAccessFactory;
 import cn.worken.gateway.resource.ResourceAccessStatus;
-import cn.worken.gateway.resource.adapter.user.UserApiResource;
-import cn.worken.gateway.resource.adapter.user.UserResourceAdapter;
+import cn.worken.gateway.resource.manage.WhiteListServerWebExchangeMatcher;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
@@ -24,29 +25,34 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public class ResourceAccessFilter implements GlobalFilter, Ordered {
 
-    private final UserResourceAdapter userResourceAdapter;
+    private final WhiteListServerWebExchangeMatcher whiteListServerWebExchangeMatcher;
+    private final ResourceAccessFactory resourceAccessFactory;
 
-    public ResourceAccessFilter(UserResourceAdapter userResourceAdapter) {
-        this.userResourceAdapter = userResourceAdapter;
+    public ResourceAccessFilter(WhiteListServerWebExchangeMatcher whiteListServerWebExchangeMatcher,
+        ResourceAccessFactory resourceAccessFactory) {
+        this.whiteListServerWebExchangeMatcher = whiteListServerWebExchangeMatcher;
+        this.resourceAccessFactory = resourceAccessFactory;
     }
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        boolean isUser = exchange.getAttributeOrDefault(ReqContextConstant.SECURITY_IS_USER, false);
-        if (isUser) {
-            UserApiResource apiResource = userResourceAdapter.loadResource(exchange);
-            GatewayAuthenticationInfo authenticationInfo =
-                exchange.getAttribute(ReqContextConstant.GATEWAY_AUTHENTICATION_INFO);
-            ResourceAccessStatus resourceAccessStatus = userResourceAdapter.access(authenticationInfo, apiResource);
-            if (resourceAccessStatus.isAccess()) {
-                return chain.filter(exchange);
-            } else {
-                throw new GatewayException(resourceAccessStatus.getDenyCode(),
-                    resourceAccessStatus.getDenyMsg());
-            }
+        if (whiteListServerWebExchangeMatcher.isWhiteApi(exchange)) {
+            return chain.filter(exchange);
         }
-
-        return chain.filter(exchange);
+        boolean isUser = exchange.getAttributeOrDefault(ReqContextConstant.SECURITY_IS_USER, false);
+        GatewayAuthenticationInfo authenticationInfo =
+            exchange.getAttribute(ReqContextConstant.GATEWAY_AUTHENTICATION_INFO);
+        if (authenticationInfo == null) {
+            throw new GatewayException(GatewayCode.AUTHENTICATION_FAILURE);
+        }
+        // 将请求上下文交给 factory 处理 resource 处理
+        ResourceAccessStatus accessResult = resourceAccessFactory.access(isUser, exchange, authenticationInfo);
+        if (accessResult.isAccess()) {
+            return chain.filter(exchange);
+        } else {
+            // 资源校验不通过
+            throw new GatewayException(accessResult.getDenyCode(), accessResult.getDenyMsg());
+        }
     }
 
     @Override
