@@ -62,8 +62,8 @@ public class AuthenticationRetrieveFilter implements GlobalFilter, Ordered {
         // attribute 存入用户信息
         exchange.getAttributes().put(ReqContextConstant.GATEWAY_AUTHENTICATION_INFO, authenticationInfo);
         // 请求头存入用户信息 供后续服务访问
-        exchange.getRequest().getHeaders()
-            .set(GatewayTransHeader.X_GATEWAY_AUTHENTICATION_INFO, JSON.toJSONString(authenticationInfo));
+        exchange.getRequest().mutate()
+            .header(GatewayTransHeader.X_GATEWAY_AUTHENTICATION_INFO, JSON.toJSONString(authenticationInfo));
         return chain.filter(exchange);
     }
 

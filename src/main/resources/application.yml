@@ -41,5 +41,8 @@ management:
       exposure:
         include: "*"
 resource:
-  excludeResourceServiceList:
+  exclude-resource-service-list:
     - gateway
+  white-api-list:
+    - /oauth/**
+    - /actuator/**

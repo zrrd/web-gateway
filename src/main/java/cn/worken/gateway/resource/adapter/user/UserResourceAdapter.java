@@ -51,7 +51,7 @@ public class UserResourceAdapter implements ResourceAdapter<UserApiResource> {
         ResourceAccessStatus resourceAccessStatus = new ResourceAccessStatus();
         if (apiResource == null || apiResource.getApiId() == null) {
             resourceAccessStatus.setAccess(true);
-        } else if (remoteCheckApiAccess(authenticationInfo.getUserId(), apiResource.getApiId())) {
+        } else if (remoteCheckApiAccess(authenticationInfo.getUserId(), apiResource.getApiId(),apiResource.getResourceName())) {
             resourceAccessStatus.setAccess(true);
         } else {
             resourceAccessStatus.setAccess(false);
@@ -68,8 +68,8 @@ public class UserResourceAdapter implements ResourceAdapter<UserApiResource> {
      * @param apiId 资源id
      * @return 匹配
      */
-    private boolean remoteCheckApiAccess(String uid, String apiId) {
-        log.info("用户id [{}] , 请求接口 [{}]", uid, apiId);
+    private boolean remoteCheckApiAccess(String uid, String apiId, String resourceName) {
+        log.info("资源校验 , 用户id [{}] , 请求资源 [{}] , 请求接口 [{}]", uid, apiId, resourceName);
         BoundSetOperations<String, String> ops = stringRedisTemplate.boundSetOps(redisResPrefix + uid);
         return Optional.ofNullable(ops.isMember(apiId)).orElse(Boolean.FALSE);
     }

@@ -63,8 +63,9 @@ public class SecurityConfig {
             .authorizeExchange().matchers(whiteListServerWebExchangeMatcher).permitAll()
             // 其他所有接口需要鉴权
             .and().authorizeExchange().anyExchange().access((authentication, object) -> {
-                // 获取token
-                return new ServerBearerTokenAuthenticationConverter().convert(object.getExchange())
+                // 获取token 先从cookie中获取 再从header中获取
+                return new CookieTokenAuthenticationConverter().convert(object.getExchange())
+                    .switchIfEmpty(new ServerBearerTokenAuthenticationConverter().convert(object.getExchange()))
                     .map(auth -> (BearerTokenAuthenticationToken) auth)
                     // 校验 jwt token
                     .flatMap(authToken -> jwtDecoder().decode(authToken.getToken()))
