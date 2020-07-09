@@ -7,6 +7,7 @@ import cn.worken.gateway.resource.adapter.client.ClientResourceAdapter;
 import cn.worken.gateway.resource.adapter.user.UserResourceAdapter;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
 
 /**
  * @author shaoyijiong
@@ -23,12 +24,11 @@ public class ResourceAccessFactory {
         this.userResourceAdapter = userResourceAdapter;
     }
 
-    public ResourceAccessStatus access(boolean isUser, ServerWebExchange exchange, GatewayAuthenticationInfo authenticationInfo) {
+    public Mono<ResourceAccessStatus> access(boolean isUser, ServerWebExchange exchange,
+        GatewayAuthenticationInfo authenticationInfo) {
         ResourceAdapter resourceAdapter = isUser ? userResourceAdapter : clientResourceAdapter;
-        ApiResource apiResource = resourceAdapter.loadResource(exchange);
-        if (apiResource == null) {
-            throw new GatewayException(GatewayCode.API_NOT_EXIST);
-        }
+        Mono apiResource = resourceAdapter.loadResource(exchange)
+            .switchIfEmpty(Mono.error(new GatewayException(GatewayCode.API_NOT_EXIST)));
         return resourceAdapter.access(authenticationInfo, apiResource);
     }
 }

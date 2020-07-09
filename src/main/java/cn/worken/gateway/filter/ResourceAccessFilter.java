@@ -46,13 +46,13 @@ public class ResourceAccessFilter implements GlobalFilter, Ordered {
             throw new GatewayException(GatewayCode.AUTHENTICATION_FAILURE);
         }
         // 将请求上下文交给 factory 处理 resource 处理
-        ResourceAccessStatus accessResult = resourceAccessFactory.access(isUser, exchange, authenticationInfo);
-        if (accessResult.isAccess()) {
-            return chain.filter(exchange);
-        } else {
-            // 资源校验不通过
-            throw new GatewayException(accessResult.getDenyCode(), accessResult.getDenyMsg());
-        }
+        Mono<ResourceAccessStatus> accessResult = resourceAccessFactory.access(isUser, exchange, authenticationInfo);
+        return accessResult.doOnNext(access -> {
+            if (!access.isAccess()) {
+                throw new GatewayException(access.getDenyCode(), access.getDenyMsg());
+            }
+        }).then(chain.filter(exchange));
+
     }
 
     @Override

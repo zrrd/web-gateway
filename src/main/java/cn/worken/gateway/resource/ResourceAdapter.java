@@ -7,6 +7,7 @@ import cn.worken.gateway.dto.GatewayAuthenticationInfo;
 import cn.worken.gateway.util.RouteUtils;
 import org.springframework.cloud.gateway.route.Route;
 import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
 
 /**
  * @author xuanlubin
@@ -21,17 +22,17 @@ public interface ResourceAdapter<T extends ApiResource> {
      * @param exchange 请求上下文
      * @return 资源
      */
-    default T loadResource(ServerWebExchange exchange) {
+    default Mono<T> loadResource(ServerWebExchange exchange) {
         Route route = exchange.getAttribute(GATEWAY_ROUTE_ATTR);
         if (route == null) {
             return null;
         }
         String serviceId = RouteUtils.getLbName(route);
-        T apiResource = this.loadResourceByReqUri(serviceId, exchange.getRequest().getPath().value());
-        if (null != apiResource) {
-            apiResource.setServiceName(serviceId);
-        }
-        return apiResource;
+        return this.loadResourceByReqUri(serviceId, exchange.getRequest().getPath().value()).doOnNext(apiResource -> {
+            if (apiResource != null) {
+                apiResource.setServiceName(serviceId);
+            }
+        });
     }
 
 
@@ -41,7 +42,7 @@ public interface ResourceAdapter<T extends ApiResource> {
      * @param apiId 资源id
      * @return api资源
      */
-    T loadResource(String apiId);
+    Mono<T> loadResource(String apiId);
 
     /**
      * 根据请求URL加载api资源
@@ -50,7 +51,7 @@ public interface ResourceAdapter<T extends ApiResource> {
      * @param reqUri 资源Uri
      * @return api资源
      */
-    T loadResourceByReqUri(String serviceId, String reqUri);
+    Mono<T> loadResourceByReqUri(String serviceId, String reqUri);
 
     /**
      * 验证对该资源的访问权限
@@ -59,5 +60,5 @@ public interface ResourceAdapter<T extends ApiResource> {
      * @param apiResource 访问资源
      * @return 返回访问权限检查状态
      */
-    ResourceAccessStatus access(GatewayAuthenticationInfo authenticationInfo, T apiResource);
+    Mono<ResourceAccessStatus> access(GatewayAuthenticationInfo authenticationInfo, Mono<T> apiResource);
 }

@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.BoundSetOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
 
 /**
  * 用户资源权限控制
@@ -31,34 +32,37 @@ public class UserResourceAdapter implements ResourceAdapter<UserApiResource> {
     }
 
     @Override
-    public UserApiResource loadResource(String apiId) {
-        return null;
+    public Mono<UserApiResource> loadResource(String apiId) {
+        return Mono.empty();
     }
 
     @Override
-    public UserApiResource loadResourceByReqUri(String serviceId, String reqUri) {
+    public Mono<UserApiResource> loadResourceByReqUri(String serviceId, String reqUri) {
         UserApiResource userApiResource = userApiResourceMapping.getUserApiResource(serviceId, reqUri);
         if (null == userApiResource) {
             userApiResource = new UserApiResource();
             userApiResource.setApiId("");
             userApiResource.setResourceName(reqUri);
         }
-        return userApiResource;
+        return Mono.just(userApiResource);
     }
 
     @Override
-    public ResourceAccessStatus access(GatewayAuthenticationInfo authenticationInfo, UserApiResource apiResource) {
-        ResourceAccessStatus resourceAccessStatus = new ResourceAccessStatus();
-        if (apiResource == null || apiResource.getApiId() == null) {
-            resourceAccessStatus.setAccess(true);
-        } else if (remoteCheckApiAccess(authenticationInfo.getUserId(), apiResource.getApiId(),apiResource.getResourceName())) {
-            resourceAccessStatus.setAccess(true);
-        } else {
-            resourceAccessStatus.setAccess(false);
-            resourceAccessStatus.setDenyCode(GatewayCode.ACCESS_DENY.getCode());
-            resourceAccessStatus.setDenyMsg(GatewayCode.ACCESS_DENY.getMessage());
-        }
-        return resourceAccessStatus;
+    public Mono<ResourceAccessStatus> access(GatewayAuthenticationInfo authenticationInfo,
+        Mono<UserApiResource> apiResource) {
+        return apiResource.map(r -> {
+            ResourceAccessStatus resourceAccessStatus = new ResourceAccessStatus();
+            if (r == null || r.getApiId() == null) {
+                resourceAccessStatus.setAccess(true);
+            } else if (remoteCheckApiAccess(authenticationInfo.getUserId(), r.getApiId(), r.getResourceName())) {
+                resourceAccessStatus.setAccess(true);
+            } else {
+                resourceAccessStatus.setAccess(false);
+                resourceAccessStatus.setDenyCode(GatewayCode.ACCESS_DENY.getCode());
+                resourceAccessStatus.setDenyMsg(GatewayCode.ACCESS_DENY.getMessage());
+            }
+            return resourceAccessStatus;
+        });
     }
 
     /**
