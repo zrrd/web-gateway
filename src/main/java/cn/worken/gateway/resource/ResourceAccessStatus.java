@@ -6,7 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * @author xuanlubin
+ * @author shaoyijong
  * @version 1.0
  * @date 2019/4/4 12:44
  */
@@ -27,4 +27,19 @@ public class ResourceAccessStatus implements Serializable {
      * 拒绝消息
      */
     private String denyMsg;
+
+
+    public static ResourceAccessStatus accessSuccess() {
+        ResourceAccessStatus resourceAccessStatus = new ResourceAccessStatus();
+        resourceAccessStatus.setAccess(true);
+        return resourceAccessStatus;
+    }
+
+    public static ResourceAccessStatus accessFail(int denyCode, String denyMsg) {
+        ResourceAccessStatus resourceAccessStatus = new ResourceAccessStatus();
+        resourceAccessStatus.setAccess(false);
+        resourceAccessStatus.setDenyCode(denyCode);
+        resourceAccessStatus.setDenyMsg(denyMsg);
+        return resourceAccessStatus;
+    }
 }

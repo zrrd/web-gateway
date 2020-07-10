@@ -3,7 +3,7 @@ package cn.worken.gateway.resource;
 import java.io.Serializable;
 
 /**
- * @author xuanlubin
+ * @author shaoyijong
  * @version 1.0
  * @date 2019/4/4 12:37
  */

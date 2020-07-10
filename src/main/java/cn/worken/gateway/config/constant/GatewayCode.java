@@ -1,7 +1,7 @@
 package cn.worken.gateway.config.constant;
 
 /**
- * @author xuanlubin
+ * @author shaoyijong
  * @version 1.0
  * @date 2019/4/9 20:36
  */

@@ -1,5 +1,6 @@
 package cn.worken.gateway.resource.adapter.client;
 
+import cn.worken.gateway.config.constant.GatewayCode;
 import cn.worken.gateway.dto.GatewayAuthenticationInfo;
 import cn.worken.gateway.resource.ResourceAccessStatus;
 import cn.worken.gateway.resource.ResourceAdapter;
@@ -46,7 +47,7 @@ public class ClientResourceAdapter implements ResourceAdapter<ClientApiResource>
             .map(row -> {
                 ClientApiResource clientApiResource = new ClientApiResource();
                 clientApiResource.setApiId(row.get("id", String.class));
-                clientApiResource.setApiId(row.get("api_uri", String.class));
+                clientApiResource.setResourceName(row.get("api_uri", String.class));
                 return clientApiResource;
             }).one();
     }
@@ -54,8 +55,20 @@ public class ClientResourceAdapter implements ResourceAdapter<ClientApiResource>
     @Override
     public Mono<ResourceAccessStatus> access(GatewayAuthenticationInfo authenticationInfo,
         Mono<ClientApiResource> apiResource) {
-        Flux<String> apiId = loadClientApiId(authenticationInfo.getClientId());
-        return Mono.empty();
+        // 判断该 client 拥有的资源id 是否匹配d
+        return loadClientApiId(authenticationInfo.getClientId())
+            // 判断匹配
+            .flatMap(apiId -> apiResource.map(resource -> resource.getApiId().equals(apiId)))
+            .all(Boolean::booleanValue)
+            .map(has -> {
+                if (has) {
+                    return ResourceAccessStatus.accessSuccess();
+                } else {
+                    return ResourceAccessStatus
+                        .accessFail(GatewayCode.ACCESS_DENY.getCode(), GatewayCode.ACCESS_DENY.getMessage());
+                }
+            });
+
     }
 
     /**
@@ -66,6 +79,7 @@ public class ClientResourceAdapter implements ResourceAdapter<ClientApiResource>
     public Flux<String> loadClientApiId(String appKey) {
         return databaseClient.select().from("open_api_grant_rel").project("api_id")
             .matching(Criteria.where("app_key").is(appKey))
-            .as(String.class).fetch().all();
+            .map(row -> row.get("api_id", String.class))
+            .all();
     }
 }

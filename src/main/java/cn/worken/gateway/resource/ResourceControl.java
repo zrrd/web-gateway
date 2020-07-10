@@ -7,9 +7,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 
 /**
- * 黑白名单控制数据,使用配置中心配置
+ * 黑白名单控制数据,使用配置中心配置 TODO 添加刷新配置接口
  *
- * @author xuanlubin
+ * @author shaoyijong
  * @version 1.0
  * @date 2019/4/24 15:13
  * <p>
@@ -37,7 +37,7 @@ public class ResourceControl {
     }
 
     /**
-     * 访问白名单 无需登陆
+     * 访问白名单 无需登陆 TODO 配置在数据库中
      */
     public boolean isWhiteApi(String api) {
         boolean whiteApi;

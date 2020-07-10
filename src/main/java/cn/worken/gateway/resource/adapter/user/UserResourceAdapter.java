@@ -51,22 +51,19 @@ public class UserResourceAdapter implements ResourceAdapter<UserApiResource> {
     public Mono<ResourceAccessStatus> access(GatewayAuthenticationInfo authenticationInfo,
         Mono<UserApiResource> apiResource) {
         return apiResource.map(r -> {
-            ResourceAccessStatus resourceAccessStatus = new ResourceAccessStatus();
             if (r == null || r.getApiId() == null) {
-                resourceAccessStatus.setAccess(true);
+                return ResourceAccessStatus.accessSuccess();
             } else if (remoteCheckApiAccess(authenticationInfo.getUserId(), r.getApiId(), r.getResourceName())) {
-                resourceAccessStatus.setAccess(true);
+                return ResourceAccessStatus.accessSuccess();
             } else {
-                resourceAccessStatus.setAccess(false);
-                resourceAccessStatus.setDenyCode(GatewayCode.ACCESS_DENY.getCode());
-                resourceAccessStatus.setDenyMsg(GatewayCode.ACCESS_DENY.getMessage());
+                return ResourceAccessStatus
+                    .accessFail(GatewayCode.ACCESS_DENY.getCode(), GatewayCode.ACCESS_DENY.getMessage());
             }
-            return resourceAccessStatus;
         });
     }
 
     /**
-     * 判断用户资源是否匹配
+     * 判断用户资源是否匹配 TODO 用 redis 的 reactor api 调用
      *
      * @param uid 用户id
      * @param apiId 资源id
